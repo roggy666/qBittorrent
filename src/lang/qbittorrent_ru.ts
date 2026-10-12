@@ -12469,7 +12469,7 @@ Please choose a different name and try again.</source>
         <location filename="../gui/transferlistmodel.cpp" line="189"/>
         <source>Completed</source>
         <comment>Amount of data completed (e.g. in MB)</comment>
-        <translation>Завершено байт</translation>
+        <translation>Скачано</translation>
     </message>
     <message>
         <location filename="../gui/transferlistmodel.cpp" line="190"/>

@@ -41,6 +41,7 @@
 #include <QMimeData>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QStyle>
 #include <QRegularExpression>
 #include <QSet>
 #include <QShortcut>
@@ -141,9 +142,6 @@ TransferListWidget::TransferListWidget(IGUIApplication *app, QWidget *parent)
 
     setObjectName(u"transferList"_s);
     setMouseTracking(true);
-    connect(m_sortFilterModel, &QAbstractItemModel::rowsInserted, this, [this](const QModelIndex &, const int first, const int last) { updateSpanning(first, last); });
-    connect(m_sortFilterModel, &QAbstractItemModel::modelReset, this, [this] { updateSpanning(); });
-    connect(m_sortFilterModel, &QAbstractItemModel::layoutChanged, this, [this] { updateSpanning(); });
 
     // Visual settings
     setUniformRowHeights(true);
@@ -163,34 +161,34 @@ TransferListWidget::TransferListWidget(IGUIApplication *app, QWidget *parent)
     header()->setFirstSectionMovable(true);
     header()->setStretchLastSection(false);
     header()->setTextElideMode(Qt::ElideRight);
+    header()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    header()->setMinimumSectionSize(60);
+    setIndentation(0);
 
-    // Default hidden columns
+    // Default columns: a simple, readable table (name, size, completed, left, progress, status, speeds, ETA)
     if (!columnLoaded)
     {
-        setColumnHidden(TransferListModel::TR_CREATE_DATE, true);
-        setColumnHidden(TransferListModel::TR_ADD_DATE, true);
-        setColumnHidden(TransferListModel::TR_SEED_DATE, true);
-        setColumnHidden(TransferListModel::TR_UPLIMIT, true);
-        setColumnHidden(TransferListModel::TR_DLLIMIT, true);
-        setColumnHidden(TransferListModel::TR_TRACKER, true);
-        setColumnHidden(TransferListModel::TR_AMOUNT_DOWNLOADED, true);
-        setColumnHidden(TransferListModel::TR_AMOUNT_UPLOADED, true);
-        setColumnHidden(TransferListModel::TR_AMOUNT_DOWNLOADED_SESSION, true);
-        setColumnHidden(TransferListModel::TR_AMOUNT_UPLOADED_SESSION, true);
-        setColumnHidden(TransferListModel::TR_AMOUNT_LEFT, true);
-        setColumnHidden(TransferListModel::TR_TIME_ELAPSED, true);
-        setColumnHidden(TransferListModel::TR_SAVE_PATH, true);
-        setColumnHidden(TransferListModel::TR_DOWNLOAD_PATH, true);
-        setColumnHidden(TransferListModel::TR_INFOHASH_V1, true);
-        setColumnHidden(TransferListModel::TR_INFOHASH_V2, true);
-        setColumnHidden(TransferListModel::TR_COMPLETED, true);
-        setColumnHidden(TransferListModel::TR_RATIO_LIMIT, true);
-        setColumnHidden(TransferListModel::TR_POPULARITY, true);
-        setColumnHidden(TransferListModel::TR_SEEN_COMPLETE_DATE, true);
-        setColumnHidden(TransferListModel::TR_LAST_ACTIVITY, true);
-        setColumnHidden(TransferListModel::TR_TOTAL_SIZE, true);
-        setColumnHidden(TransferListModel::TR_REANNOUNCE, true);
-        setColumnHidden(TransferListModel::TR_PRIVATE, true);
+        const QList<TransferListModel::Column> visible =
+        {
+            TransferListModel::TR_NAME, TransferListModel::TR_SIZE, TransferListModel::TR_COMPLETED,
+            TransferListModel::TR_AMOUNT_LEFT, TransferListModel::TR_PROGRESS, TransferListModel::TR_STATUS,
+            TransferListModel::TR_DLSPEED, TransferListModel::TR_UPSPEED, TransferListModel::TR_ETA
+        };
+        for (int i = 0; i < TransferListModel::NB_COLUMNS; ++i)
+            setColumnHidden(i, !visible.contains(static_cast<TransferListModel::Column>(i)));
+        // visual order: Name, Size, Downloaded, Left, Progress, Status, Down, Up, ETA
+        int pos = 0;
+        for (const TransferListModel::Column col : visible)
+            header()->moveSection(header()->visualIndex(col), pos++);
+        setColumnWidth(TransferListModel::TR_NAME, 380);
+        setColumnWidth(TransferListModel::TR_SIZE, 92);
+        setColumnWidth(TransferListModel::TR_COMPLETED, 104);
+        setColumnWidth(TransferListModel::TR_AMOUNT_LEFT, 92);
+        setColumnWidth(TransferListModel::TR_PROGRESS, 170);
+        setColumnWidth(TransferListModel::TR_STATUS, 130);
+        setColumnWidth(TransferListModel::TR_DLSPEED, 104);
+        setColumnWidth(TransferListModel::TR_UPSPEED, 104);
+        setColumnWidth(TransferListModel::TR_ETA, 92);
     }
 
     if (!columnLoaded)
@@ -260,7 +258,7 @@ TransferListModel *TransferListWidget::getSourceModel() const
 
 bool TransferListWidget::isCardView() const
 {
-    return m_cardViewSetting.get(true);
+    return m_cardViewSetting.get(false);
 }
 
 void TransferListWidget::setCardView(const bool enabled)
@@ -275,23 +273,42 @@ void TransferListWidget::setCardView(const bool enabled)
 void TransferListWidget::applyCardView()
 {
     const bool card = isCardView();
-    setItemDelegate(card ? m_cardDelegate : m_tableDelegate);
-    setUniformRowHeights(!card);
-    header()->setVisible(!card);
-    setHorizontalScrollBarPolicy(card ? Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded);
+    QHeaderView *hdr = header();
+    if (card)
+    {
+        if (m_headerStateBeforeCard.isEmpty())
+            m_headerStateBeforeCard = hdr->saveState();
+        setItemDelegate(m_cardDelegate);
+        hdr->hide();
+        for (int i = 0; i < TransferListModel::NB_COLUMNS; ++i)
+            setColumnHidden(i, (i != TransferListModel::TR_NAME));
+        hdr->setSectionResizeMode(TransferListModel::TR_NAME, QHeaderView::Stretch);
+        setUniformRowHeights(false);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    }
+    else
+    {
+        setItemDelegate(m_tableDelegate);
+        hdr->setSectionResizeMode(QHeaderView::Interactive);
+        if (!m_headerStateBeforeCard.isEmpty())
+        {
+            hdr->restoreState(m_headerStateBeforeCard);
+            m_headerStateBeforeCard.clear();
+        }
+        else
+        {
+            loadSettings();
+        }
+        hdr->show();
+        setUniformRowHeights(true);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    }
     setAlternatingRowColors(false);
-    updateSpanning();
+    setProperty("cardMode", card);
+    style()->unpolish(this);
+    style()->polish(this);
     doItemsLayout();
     viewport()->update();
-}
-
-void TransferListWidget::updateSpanning(const int first, int last)
-{
-    const bool card = isCardView();
-    if (last < 0)
-        last = m_sortFilterModel->rowCount() - 1;
-    for (int row = first; row <= last; ++row)
-        setFirstColumnSpanned(row, QModelIndex(), card);
 }
 
 void TransferListWidget::previewFile(const Path &filePath)
@@ -627,6 +644,8 @@ void TransferListWidget::copySelectedComments() const
 
 void TransferListWidget::hideQueuePosColumn(bool hide)
 {
+    if (isCardView())
+        return;
     setColumnHidden(TransferListModel::TR_QUEUE_POSITION, hide);
     if (!hide && (columnWidth(TransferListModel::TR_QUEUE_POSITION) == 0))
         resizeColumnToContents(TransferListModel::TR_QUEUE_POSITION);
@@ -1428,6 +1447,8 @@ void TransferListWidget::applyStatusFilter(const int filterIndex)
 
 void TransferListWidget::saveSettings()
 {
+    if (isCardView())
+        return;
     Preferences::instance()->setTransHeaderState(header()->saveState());
 }
 

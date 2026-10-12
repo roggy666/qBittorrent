@@ -149,11 +149,11 @@ private:
     int visibleColumnsCount() const;
 
     void applyCardView();
-    void updateSpanning(int first = 0, int last = -1);
 
     TransferListModel *m_listModel = nullptr;
     TransferListSortModel *m_sortFilterModel = nullptr;
     QStyledItemDelegate *m_tableDelegate = nullptr;
     QStyledItemDelegate *m_cardDelegate = nullptr;
     SettingValue<bool> m_cardViewSetting {u"GUI/TransferList/CardView"_s};
+    QByteArray m_headerStateBeforeCard;
 };

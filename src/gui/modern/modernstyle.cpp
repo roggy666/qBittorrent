@@ -171,11 +171,15 @@ QTreeView::item:selected:!active, QListView::item:selected:!active { background:
 QTreeView::branch { background: transparent; }
 QTreeView::branch:has-children:!has-siblings:closed, QTreeView::branch:closed:has-children:has-siblings { image: url(:/modern/chevron-right.svg); }
 QTreeView::branch:open:has-children:!has-siblings, QTreeView::branch:open:has-children:has-siblings { image: url(:/modern/chevron-down.svg); }
-QTreeView#transferList { padding: 0; border: none; background: transparent; }
-QTreeView#transferList::item { padding: 0; border-radius: 0; }
-QTreeView#transferList::item:hover, QTreeView#transferList::item:selected { background: transparent; color: %TEXT%; }
+QTreeView#transferList { padding: 0; border: 1px solid %BORDER%; border-radius: %R%px; background: %SURFACE%; }
+QTreeView#transferList::item { padding: 8px 8px; border-radius: 0; border: none; border-bottom: 1px solid %BG%; }
+QTreeView#transferList::item:hover { background: %SURFACE2%; }
+QTreeView#transferList::item:selected { background: %ACCENTSOFT%; color: #ffffff; }
+QTreeView#transferList[cardMode="true"] { border: none; background: transparent; }
+QTreeView#transferList[cardMode="true"]::item { padding: 0; border: none; }
+QTreeView#transferList[cardMode="true"]::item:hover, QTreeView#transferList[cardMode="true"]::item:selected { background: transparent; color: %TEXT%; }
 QHeaderView { background: transparent; border: none; }
-QHeaderView::section { background: %SURFACE%; color: %MUTED%; padding: 7px 8px; border: none; border-bottom: 1px solid %BORDER%; border-right: 1px solid %BORDER%; font-weight: 600; }
+QHeaderView::section { background: %SURFACE%; color: %DIM%; padding: 9px 8px; border: none; border-bottom: 1px solid %BORDER%; border-right: 1px solid %BG%; font-weight: 700; font-size: 8pt; }
 QHeaderView::section:hover { background: %SURFACE2%; color: %TEXT%; }
 QHeaderView::section:first { border-top-left-radius: %RS%px; }
 QHeaderView::section:last { border-right: none; border-top-right-radius: %RS%px; }

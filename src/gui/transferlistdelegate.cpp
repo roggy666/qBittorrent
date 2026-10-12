@@ -29,9 +29,16 @@
 
 #include "transferlistdelegate.h"
 
+#include <algorithm>
+
+#include <QApplication>
+#include <QFontMetricsF>
 #include <QModelIndex>
+#include <QPainter>
+#include <QStyle>
 
 #include "base/preferences.h"
+#include "modern/modernstyle.h"
 #include "transferlistmodel.h"
 
 TransferListDelegate::TransferListDelegate(QObject *parent)
@@ -59,40 +66,66 @@ QSize TransferListDelegate::sizeHint(const QStyleOptionViewItem &option, const Q
 
 void TransferListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    switch (index.column())
+    if (index.column() != TransferListModel::TR_PROGRESS)
     {
-    case TransferListModel::TR_PROGRESS:
-        {
-            using namespace BitTorrent;
+        QStyledItemDelegate::paint(painter, option, index);
+        return;
+    }
 
-            const auto isEnableState = [](const TorrentState state) -> bool
-            {
-                switch (state)
-                {
-                case TorrentState::Error:
-                case TorrentState::StoppedDownloading:
-                case TorrentState::Unknown:
-                    return false;
-                default:
-                    return true;
-                }
-            };
+    using namespace BitTorrent;
 
-            const int progress = static_cast<int>(index.data(TransferListModel::UnderlyingDataRole).toReal());
+    QStyleOptionViewItem opt {option};
+    initStyleOption(&opt, index);
+    opt.text.clear();
+    const QStyle *style = opt.widget ? opt.widget->style() : QApplication::style();
+    style->drawPrimitive(QStyle::PE_PanelItemViewItem, &opt, painter, opt.widget);
 
-            const QModelIndex statusIndex = index.siblingAtColumn(TransferListModel::TR_STATUS);
-            const auto torrentState = statusIndex.data(TransferListModel::UnderlyingDataRole).value<TorrentState>();
-
-            QStyleOptionViewItem customOption {option};
-            customOption.state.setFlag(QStyle::State_Enabled, isEnableState(torrentState));
-
-            const QColor color = Preferences::instance()->getProgressBarFollowsTextColor() ? index.data(Qt::ForegroundRole).value<QColor>() : QColor();
-
-            m_progressBarPainter.paint(painter, customOption, index.data().toString(), progress, color);
-        }
+    const qreal progress = std::clamp(index.data(TransferListModel::UnderlyingDataRole).toReal(), 0.0, 100.0);
+    const QModelIndex statusIndex = index.siblingAtColumn(TransferListModel::TR_STATUS);
+    const auto torrentState = statusIndex.data(TransferListModel::UnderlyingDataRole).value<TorrentState>();
+    QColor fill = statusIndex.data(Qt::ForegroundRole).value<QColor>();
+    if (!fill.isValid())
+        fill = ModernStyle::Colors::accent;
+    switch (torrentState)
+    {
+    case TorrentState::StoppedDownloading:
+    case TorrentState::Unknown:
+        fill = ModernStyle::Colors::paused;
+        break;
+    case TorrentState::StoppedUploading:
+        fill = ModernStyle::Colors::accent;
+        break;
+    case TorrentState::Error:
+    case TorrentState::MissingFiles:
+        fill = ModernStyle::Colors::danger;
         break;
     default:
-        QStyledItemDelegate::paint(painter, option, index);
         break;
     }
+
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing, true);
+    const QRectF cell = QRectF(opt.rect).adjusted(8, 0, -8, 0);
+    QFont pctFont = opt.font;
+    pctFont.setPointSizeF(opt.font.pointSizeF() - 0.5);
+    pctFont.setWeight(QFont::DemiBold);
+    const QFontMetricsF fm {pctFont};
+    const qreal textW = fm.horizontalAdvance(u"100.0%"_s) + 4;
+    const qreal barH = 7;
+    const QRectF track {cell.left(), cell.center().y() - barH / 2, std::max(20.0, cell.width() - textW - 8), barH};
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(ModernStyle::Colors::track);
+    painter->drawRoundedRect(track, barH / 2, barH / 2);
+    if (progress > 0)
+    {
+        QRectF done = track;
+        done.setWidth(std::max(barH, track.width() * progress / 100.0));
+        painter->setBrush(fill);
+        painter->drawRoundedRect(done, barH / 2, barH / 2);
+    }
+    painter->setFont(pctFont);
+    painter->setPen(opt.state.testFlag(QStyle::State_Selected) ? QColor(Qt::white) : ModernStyle::Colors::textMuted);
+    const QString pct = (progress >= 100.0) ? u"100%"_s : u"%1%"_s.arg(QString::number(progress, 'f', 1));
+    painter->drawText(QRectF(track.right() + 8, cell.top(), textW, cell.height()), Qt::AlignLeft | Qt::AlignVCenter, pct);
+    painter->restore();
 }
