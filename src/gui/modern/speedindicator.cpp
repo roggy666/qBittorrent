@@ -32,6 +32,7 @@ SpeedIndicator::SpeedIndicator(QWidget *parent)
     setCursor(Qt::PointingHandCursor);
     setToolTip(tr("Download / upload speed. Click to set global speed limits."));
     setAttribute(Qt::WA_Hover);
+    setFixedSize(sizeHint());
     m_dl.reserve(HISTORY);
     m_up.reserve(HISTORY);
     connect(m_timer, &QTimer::timeout, this, &SpeedIndicator::sample);
@@ -41,7 +42,7 @@ SpeedIndicator::SpeedIndicator(QWidget *parent)
 
 QSize SpeedIndicator::sizeHint() const
 {
-    return {300, 38};
+    return {280, 40};
 }
 
 void SpeedIndicator::sample()

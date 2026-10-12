@@ -4425,6 +4425,78 @@ Minimum requirement: %2.</source>
         <source>Torrent Files</source>
         <translation>Торрент-файлы</translation>
     </message>
+    <message>
+        <source>Add</source>
+        <translation>Добавить</translation>
+    </message>
+    <message>
+        <source>Search torrents...</source>
+        <translation>Поиск торрентов…</translation>
+    </message>
+    <message>
+        <source>Sort</source>
+        <translation>Сортировка</translation>
+    </message>
+    <message>
+        <source>Added on</source>
+        <translation>Дата добавления</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Имя</translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation>Прогресс</translation>
+    </message>
+    <message>
+        <source>Down speed</source>
+        <translation>Скорость загрузки</translation>
+    </message>
+    <message>
+        <source>Up speed</source>
+        <translation>Скорость отдачи</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>Размер</translation>
+    </message>
+    <message>
+        <source>ETA</source>
+        <translation>Осталось</translation>
+    </message>
+    <message>
+        <source>Ratio</source>
+        <translation>Рейтинг</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Статус</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation>Очередь</translation>
+    </message>
+    <message>
+        <source>Toggle sort order</source>
+        <translation>Сменить порядок сортировки</translation>
+    </message>
+    <message>
+        <source>Card view</source>
+        <translation>Карточки</translation>
+    </message>
+    <message>
+        <source>Table view</source>
+        <translation>Таблица</translation>
+    </message>
+    <message>
+        <source>Switch between card and table view</source>
+        <translation>Переключить карточки / таблицу</translation>
+    </message>
+    <message>
+        <source>Menu</source>
+        <translation>Меню</translation>
+    </message>
 </context>
 <context>
     <name>Net::DNSUpdater</name>
@@ -8910,7 +8982,7 @@ Those plugins were disabled.</source>
     <message>
         <location filename="../base/rss/rss_autodownloader.cpp" line="496"/>
         <source>Failed to add torrent from RSS article. Reason: unsupported torrent URL. Only HTTP(S) URLs, magnet URIs and info hashes are supported. Article: &quot;%1&quot;. URL: &quot;%2&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось добавить торрент из статьи RSS. Причина: неподдерживаемый URL торрента. Поддерживаются только HTTP(S)-ссылки, magnet-ссылки и info-хеши. Статья: &quot;%1&quot;. URL: &quot;%2&quot;</translation>
     </message>
     <message>
         <location filename="../base/rss/rss_autodownloader.cpp" line="535"/>
@@ -9292,13 +9364,14 @@ Those plugins were disabled.</source>
     <message>
         <location filename="../gui/rss/rsswidget.cpp" line="448"/>
         <source>Blocked adding torrent from RSS article. Unsupported torrent URL. Only HTTP(S) URLs, magnet URIs and info hashes are supported. Article: &quot;%1&quot;. URL: &quot;%2&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Заблокировано добавление торрента из статьи RSS. Неподдерживаемый URL торрента. Поддерживаются только HTTP(S)-ссылки, magnet-ссылки и info-хеши. Статья: &quot;%1&quot;. URL: &quot;%2&quot;.</translation>
     </message>
     <message>
         <location filename="../gui/rss/rsswidget.cpp" line="460"/>
         <source>Blocked adding torrent from RSS article. The following article has an unsupported torrent URL and it may be malicious behaviour:
 %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Заблокировано добавление торрента из статьи RSS. У этой статьи неподдерживаемый URL торрента, возможно вредоносное поведение:
+%1</translation>
     </message>
     <message>
         <location filename="../gui/rss/rsswidget.cpp" line="512"/>
@@ -12796,6 +12869,18 @@ Please choose a different name and try again.</source>
         <source>Super seeding mode</source>
         <translation>Режим суперсида</translation>
     </message>
+    <message>
+        <source>Nothing matches this filter</source>
+        <translation>По этому фильтру ничего нет</translation>
+    </message>
+    <message>
+        <source>No torrents yet</source>
+        <translation>Торрентов пока нет</translation>
+    </message>
+    <message>
+        <source>Drop a .torrent file here, paste a magnet link, or press the Add button</source>
+        <translation>Перетащи сюда .torrent, вставь magnet-ссылку или нажми «Добавить»</translation>
+    </message>
 </context>
 <context>
     <name>UIThemeDialog</name>
@@ -13264,6 +13349,92 @@ Please choose a different name and try again.</source>
         <source>&lt; 1m</source>
         <comment>&lt; 1 minute</comment>
         <translation>&lt; 1 м</translation>
+    </message>
+</context>
+<context>
+    <name>SpeedIndicator</name>
+    <message>
+        <source>Download</source>
+        <translation>Загрузка</translation>
+    </message>
+    <message>
+        <source>Upload</source>
+        <translation>Отдача</translation>
+    </message>
+    <message>
+        <source>Download / upload speed. Click to set global speed limits.</source>
+        <translation>Скорость загрузки и отдачи. Клик — глобальные лимиты скорости.</translation>
+    </message>
+</context>
+<context>
+    <name>TransferListCardDelegate</name>
+    <message>
+        <source>Downloading</source>
+        <translation>Загрузка</translation>
+    </message>
+    <message>
+        <source>Metadata</source>
+        <translation>Метаданные</translation>
+    </message>
+    <message>
+        <source>Stalled</source>
+        <translation>Ожидание</translation>
+    </message>
+    <message>
+        <source>Seeding</source>
+        <translation>Раздача</translation>
+    </message>
+    <message>
+        <source>Seeding · idle</source>
+        <translation>Раздача · простой</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>В очереди</translation>
+    </message>
+    <message>
+        <source>Checking</source>
+        <translation>Проверка</translation>
+    </message>
+    <message>
+        <source>Moving</source>
+        <translation>Перемещение</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>Остановлен</translation>
+    </message>
+    <message>
+        <source>Completed</source>
+        <translation>Завершён</translation>
+    </message>
+    <message>
+        <source>Missing files</source>
+        <translation>Нет файлов</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Ошибка</translation>
+    </message>
+    <message>
+        <source>Down</source>
+        <translation>Загр.</translation>
+    </message>
+    <message>
+        <source>Up</source>
+        <translation>Отд.</translation>
+    </message>
+    <message>
+        <source>ETA</source>
+        <translation>Осталось</translation>
+    </message>
+    <message>
+        <source>Ratio</source>
+        <translation>Рейтинг</translation>
+    </message>
+    <message>
+        <source>Seeds %1  ·  Peers %2</source>
+        <translation>Сиды %1  ·  Пиры %2</translation>
     </message>
 </context>
 </TS>

@@ -39,6 +39,8 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QPainter>
+#include <QPaintEvent>
 #include <QRegularExpression>
 #include <QSet>
 #include <QShortcut>
@@ -58,6 +60,7 @@
 #include "base/utils/string.h"
 #include "autoexpandabledialog.h"
 #include "deletionconfirmationdialog.h"
+#include "modern/modernstyle.h"
 #include "modern/transferlistcarddelegate.h"
 #include "interfaces/iguiapplication.h"
 #include "mainwindow.h"
@@ -190,6 +193,9 @@ TransferListWidget::TransferListWidget(IGUIApplication *app, QWidget *parent)
         setColumnHidden(TransferListModel::TR_PRIVATE, true);
     }
 
+    if (!columnLoaded)
+        sortByColumn(TransferListModel::TR_ADD_DATE, Qt::DescendingOrder);
+
     //Ensure that at least one column is visible at all times
     bool atLeastOne = false;
     for (int i = 0; i < TransferListModel::NB_COLUMNS; ++i)
@@ -272,6 +278,7 @@ void TransferListWidget::applyCardView()
     setItemDelegate(card ? m_cardDelegate : m_tableDelegate);
     setUniformRowHeights(!card);
     header()->setVisible(!card);
+    setHorizontalScrollBarPolicy(card ? Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded);
     setAlternatingRowColors(false);
     updateSpanning();
     doItemsLayout();
@@ -1427,6 +1434,34 @@ void TransferListWidget::saveSettings()
 bool TransferListWidget::loadSettings()
 {
     return header()->restoreState(Preferences::instance()->getTransHeaderState());
+}
+
+void TransferListWidget::paintEvent(QPaintEvent *event)
+{
+    QTreeView::paintEvent(event);
+    if (m_sortFilterModel->rowCount() > 0)
+        return;
+
+    QPainter painter {viewport()};
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    const QRect area = viewport()->rect();
+    const QIcon icon {u":/modern/icons/empty-box.svg"_s};
+    const int iconSize = 56;
+    const QRect iconRect {area.center().x() - iconSize / 2, area.center().y() - iconSize - 6, iconSize, iconSize};
+    painter.setOpacity(0.55);
+    icon.paint(&painter, iconRect);
+    painter.setOpacity(1.0);
+    QFont title = font();
+    title.setPointSizeF(font().pointSizeF() + 3);
+    title.setWeight(QFont::DemiBold);
+    painter.setFont(title);
+    painter.setPen(ModernStyle::Colors::textMuted);
+    painter.drawText(QRect(area.left(), iconRect.bottom() + 10, area.width(), 28), Qt::AlignCenter
+        , (m_listModel->rowCount() > 0) ? tr("Nothing matches this filter") : tr("No torrents yet"));
+    painter.setFont(font());
+    painter.setPen(ModernStyle::Colors::textDim);
+    painter.drawText(QRect(area.left(), iconRect.bottom() + 40, area.width(), 24), Qt::AlignCenter
+        , tr("Drop a .torrent file here, paste a magnet link, or press the Add button"));
 }
 
 void TransferListWidget::dragEnterEvent(QDragEnterEvent *event)

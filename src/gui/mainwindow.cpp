@@ -29,6 +29,8 @@
 
 #include "mainwindow.h"
 
+#include <QHeaderView>
+#include <QItemSelectionModel>
 #include <QToolButton>
 
 #include <QtSystemDetection>
@@ -266,19 +268,49 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
 
     // ---------------- modern top bar ----------------
     {
-        if (QWidget *addBtn = m_ui->toolBar->widgetForAction(m_ui->actionOpen))
-            addBtn->setObjectName(u"primaryAction"_s);
+        QToolBar *tb = m_ui->toolBar;
+        tb->setIconSize(QSize(18, 18));
+        tb->setMovable(false);
+
+        // drop every separator, we re-add the ones we want
+        for (QAction *action : tb->actions())
+        {
+            if (action->isSeparator())
+                tb->removeAction(action);
+        }
+
+        // primary "Add" button: standalone QToolButton so toolbar style changes never affect it
+        tb->removeAction(m_ui->actionOpen);
+        auto *addBtn = new QToolButton(tb);
+        addBtn->setObjectName(u"primaryAction"_s);
+        addBtn->setIcon(m_ui->actionOpen->icon());
+        addBtn->setText(tr("Add"));
+        addBtn->setToolTip(m_ui->actionOpen->toolTip());
+        addBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        addBtn->setCursor(Qt::PointingHandCursor);
+        connect(addBtn, &QToolButton::clicked, m_ui->actionOpen, &QAction::trigger);
+        tb->insertWidget(m_ui->actionDownloadFromURL, addBtn);
+
+        // these live in the overflow menu only
+        tb->removeAction(m_ui->actionLock);
+        tb->removeAction(m_ui->actionCreateTorrent);
+        tb->removeAction(m_ui->actionOptions);
+        QAction *selectionSeparator = tb->insertSeparator(m_ui->actionDelete);
+
+        // search
         m_columnFilterEdit->setObjectName(u"searchField"_s);
         m_columnFilterEdit->setPlaceholderText(tr("Search torrents..."));
-        m_columnFilterEdit->setFixedWidth(260);
+        m_columnFilterEdit->setFixedWidth(240);
         m_columnFilterEdit->setClearButtonEnabled(true);
         columnFilterLabel->hide();
-        m_columnFilterComboBox->setFixedWidth(120);
+        m_columnFilterComboBox->hide();
 
+        // speed indicator
         m_speedIndicator = new SpeedIndicator(this);
         connect(m_speedIndicator, &SpeedIndicator::clicked, this, &MainWindow::on_actionSetGlobalSpeedLimits_triggered);
-        m_ui->toolBar->insertWidget(m_columnFilterAction, m_speedIndicator);
+        tb->insertWidget(m_columnFilterAction, m_speedIndicator);
 
+        // sort (card view only)
         auto *sortWidget = new QWidget(this);
         auto *sortLayout = new QHBoxLayout(sortWidget);
         sortLayout->setContentsMargins(10, 0, 6, 0);
@@ -288,7 +320,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
         m_sortComboBox = new QComboBox(sortWidget);
         const QList<QPair<QString, TransferListModel::Column>> sortItems =
         {
-            {tr("Name"), TransferListModel::TR_NAME}, {tr("Added on"), TransferListModel::TR_ADD_DATE},
+            {tr("Added on"), TransferListModel::TR_ADD_DATE}, {tr("Name"), TransferListModel::TR_NAME},
             {tr("Progress"), TransferListModel::TR_PROGRESS}, {tr("Down speed"), TransferListModel::TR_DLSPEED},
             {tr("Up speed"), TransferListModel::TR_UPSPEED}, {tr("Size"), TransferListModel::TR_SIZE},
             {tr("ETA"), TransferListModel::TR_ETA}, {tr("Ratio"), TransferListModel::TR_RATIO},
@@ -302,7 +334,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
         sortLayout->addWidget(sortLabel);
         sortLayout->addWidget(m_sortComboBox);
         sortLayout->addWidget(m_sortOrderButton);
-        m_sortAction = m_ui->toolBar->insertWidget(m_columnFilterAction, sortWidget);
+        m_sortAction = tb->insertWidget(m_columnFilterAction, sortWidget);
 
         const auto syncSortIcon = [this]
         {
@@ -325,6 +357,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
         connect(m_sortComboBox, &QComboBox::currentIndexChanged, this, applySort);
         connect(m_sortOrderButton, &QToolButton::toggled, this, applySort);
 
+        // card / table toggle
         m_cardViewAction = new QAction(tr("Card view"), this);
         m_cardViewAction->setCheckable(true);
         m_cardViewAction->setToolTip(tr("Switch between card and table view"));
@@ -338,8 +371,37 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
         syncCardView(m_transferListWidget->isCardView());
         connect(m_cardViewAction, &QAction::toggled, m_transferListWidget, &TransferListWidget::setCardView);
         connect(m_transferListWidget, &TransferListWidget::cardViewChanged, this, syncCardView);
-        m_ui->toolBar->insertAction(m_columnFilterAction, m_cardViewAction);
+        tb->insertAction(m_columnFilterAction, m_cardViewAction);
         m_ui->menuView->insertAction(m_ui->actionSpeedInTitleBar, m_cardViewAction);
+
+        // right edge: settings + overflow menu (holds the whole classic menu bar)
+        tb->addAction(m_ui->actionOptions);
+        auto *menuBtn = new QToolButton(tb);
+        menuBtn->setIcon(QIcon(u":/modern/icons/more.svg"_s));
+        menuBtn->setPopupMode(QToolButton::InstantPopup);
+        menuBtn->setToolTip(tr("Menu"));
+        auto *overflow = new QMenu(menuBtn);
+        for (QAction *action : m_ui->menubar->actions())
+        {
+            if (QMenu *menu = action->menu())
+            {
+                overflow->addMenu(menu);
+                addActions(menu->actions()); // keep shortcuts alive while the menu bar is hidden
+            }
+        }
+        menuBtn->setMenu(overflow);
+        tb->addWidget(menuBtn);
+        m_ui->menubar->hide();
+
+        // start / stop / delete only make sense with a selection
+        const auto syncSelection = [this, selectionSeparator]
+        {
+            const bool has = m_transferListWidget->selectionModel()->hasSelection();
+            for (QAction *action : {m_ui->actionStart, m_ui->actionStop, m_ui->actionDelete, selectionSeparator})
+                action->setVisible(has);
+        };
+        connect(m_transferListWidget->selectionModel(), &QItemSelectionModel::selectionChanged, this, syncSelection);
+        syncSelection();
     }
     m_tabs->addTab(m_splitter,
 #ifndef Q_OS_MACOS

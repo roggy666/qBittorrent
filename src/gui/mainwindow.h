@@ -45,6 +45,7 @@ class QSplitter;
 class QString;
 class QTabWidget;
 class QTimer;
+class QItemSelectionModel;
 class QToolButton;
 
 class AboutDialog;

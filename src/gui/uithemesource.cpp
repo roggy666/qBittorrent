@@ -127,6 +127,10 @@ QColor DefaultThemeSource::getColor(const QString &colorId, const ColorMode colo
 
 Path DefaultThemeSource::getIconPath(const QString &iconId, const ColorMode colorMode) const
 {
+    // Modern UI: monochrome icon set overrides the stock colored icons
+    if (const Path modernIcon = findIcon(iconId, Path(u":/modern/icons"_s)); !modernIcon.isEmpty())
+        return modernIcon;
+
     const Path iconsPath {u"icons"_s};
     const Path lightModeIconsPath = iconsPath / Path(u"light"_s);
     const Path darkModeIconsPath = iconsPath / Path(u"dark"_s);

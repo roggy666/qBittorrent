@@ -1674,7 +1674,7 @@ void Preferences::setFiltersSidebarVisible(const bool value)
 
 int Preferences::getFiltersSidebarWidth() const
 {
-    return value(u"GUI/MainWindow/FiltersSidebarWidth"_s, 120);
+    return value(u"GUI/MainWindow/FiltersSidebarWidth"_s, 230);
 }
 
 void Preferences::setFiltersSidebarWidth(const int value)
@@ -1973,7 +1973,7 @@ void Preferences::setTransSelFilter(const int index)
 
 bool Preferences::getHideZeroStatusFilters() const
 {
-    return value<bool>(u"TransferListFilters/HideZeroStatusFilters"_s, false);
+    return value<bool>(u"TransferListFilters/HideZeroStatusFilters"_s, true);
 }
 
 void Preferences::setHideZeroStatusFilters(const bool hide)

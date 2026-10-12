@@ -97,14 +97,14 @@ QMenu::icon { padding-left: 8px; }
 QMenu::indicator { width: 14px; height: 14px; left: 8px; }
 
 /* ---------- toolbar ---------- */
-QToolBar { background: %BG%; border: none; padding: 6px 10px; spacing: 4px; }
+QToolBar { background: %BG%; border: none; padding: 8px 12px; spacing: 6px; }
 QToolBar::separator { width: 1px; background: %SURFACE3%; margin: 8px 6px; }
-QToolButton { background: transparent; border: 1px solid transparent; border-radius: %RS%px; padding: 7px 10px; color: %TEXT%; }
+QToolButton { background: transparent; border: 1px solid transparent; border-radius: %RS%px; padding: 8px; color: %TEXT%; }
 QToolButton:hover { background: %SURFACE2%; }
 QToolButton:pressed, QToolButton:checked { background: %SURFACE3%; }
 QToolButton:disabled { color: %DIM%; }
 QToolButton::menu-indicator { image: none; width: 0; }
-QToolButton#primaryAction { background: %ACCENT%; color: #ffffff; padding: 7px 14px; font-weight: 600; }
+QToolButton#primaryAction { background: %ACCENT%; color: #ffffff; padding: 8px 16px 8px 12px; font-weight: 600; }
 QToolButton#primaryAction:hover { background: %ACCENTHOVER%; }
 QToolButton#primaryAction:pressed { background: %ACCENTSOFT%; }
 
@@ -116,12 +116,12 @@ QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled { color: %DIM%; backgr
 QLineEdit#searchField { padding-left: 12px; min-width: 240px; }
 QComboBox { padding-right: 26px; }
 QComboBox::drop-down { border: none; width: 24px; subcontrol-origin: padding; subcontrol-position: center right; }
-QComboBox::down-arrow { image: none; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid %MUTED%; width: 0; height: 0; margin-right: 10px; }
+QComboBox::down-arrow { image: url(:/modern/chevron-down.svg); width: 14px; height: 14px; margin-right: 6px; }
 QComboBox QAbstractItemView { background: %SURFACE%; border: 1px solid %SURFACE3%; border-radius: %RS%px; padding: 4px; selection-background-color: %ACCENTSOFT%; outline: none; }
 QComboBox QAbstractItemView::item { padding: 6px 8px; border-radius: 6px; min-height: 22px; }
 QSpinBox::up-button, QDoubleSpinBox::up-button, QSpinBox::down-button, QDoubleSpinBox::down-button { width: 18px; border: none; background: transparent; }
-QSpinBox::up-arrow, QDoubleSpinBox::up-arrow { border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 5px solid %MUTED%; width: 0; height: 0; }
-QSpinBox::down-arrow, QDoubleSpinBox::down-arrow { border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid %MUTED%; width: 0; height: 0; }
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow { image: url(:/modern/chevron-up.svg); width: 10px; height: 10px; }
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow { image: url(:/modern/chevron-down.svg); width: 10px; height: 10px; }
 
 /* ---------- buttons ---------- */
 QPushButton { background: %SURFACE2%; border: 1px solid %BORDER%; border-radius: %RS%px; padding: 7px 16px; min-height: 18px; }
@@ -186,7 +186,7 @@ QTableView QTableCornerButton::section { background: %SURFACE%; border: none; }
 /* ---------- sidebar ---------- */
 QWidget#sidebar { background: %SURFACE%; border: 1px solid %BORDER%; border-radius: %R%px; }
 QWidget#sidebar QScrollArea, QWidget#sidebar QScrollArea > QWidget > QWidget { background: transparent; }
-QWidget#sidebar QCheckBox { color: %DIM%; font-size: 8pt; font-weight: 700; letter-spacing: 1px; padding: 10px 10px 2px 10px; }
+QWidget#sidebar QCheckBox { color: %DIM%; font-size: 8pt; font-weight: 700; letter-spacing: 1px; padding: 12px 10px 4px 12px; }
 QWidget#sidebar QCheckBox::indicator { width: 10px; height: 10px; border: none; background: transparent; }
 QWidget#sidebar QListWidget, QWidget#sidebar QTreeView { background: transparent; border: none; border-radius: 0; padding: 0 6px; }
 QWidget#sidebar QListWidget::item, QWidget#sidebar QTreeView::item { padding: 7px 10px; border-radius: 8px; margin: 1px 0; color: %MUTED%; }
