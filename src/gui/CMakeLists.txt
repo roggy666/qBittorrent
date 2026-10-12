@@ -69,6 +69,9 @@ add_library(qbt_gui STATIC
     log/loglistview.h
     log/logmodel.h
     mainwindow.h
+    modern/modernstyle.h
+    modern/speedindicator.h
+    modern/transferlistcarddelegate.h
     optionsdialog.h
     powermanagement/inhibitor.h
     powermanagement/powermanagement.h
@@ -172,6 +175,9 @@ add_library(qbt_gui STATIC
     log/loglistview.cpp
     log/logmodel.cpp
     mainwindow.cpp
+    modern/modernstyle.cpp
+    modern/speedindicator.cpp
+    modern/transferlistcarddelegate.cpp
     optionsdialog.cpp
     powermanagement/inhibitor.cpp
     powermanagement/powermanagement.cpp
@@ -252,7 +258,7 @@ add_library(qbt_gui STATIC
     ${UI_HEADERS}
 )
 
-target_sources(qbt_gui INTERFACE about.qrc)
+target_sources(qbt_gui INTERFACE about.qrc modern/modern.qrc)
 
 # UI headers will be generated in ${CMAKE_CURRENT_BINARY_DIR}
 target_include_directories(qbt_gui PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
@@ -317,4 +323,5 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         programupdater.h
         programupdater.cpp
     )
+    target_link_libraries(qbt_gui PRIVATE dwmapi)
 endif()

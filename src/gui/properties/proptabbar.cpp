@@ -98,6 +98,12 @@ PropTabBar::PropTabBar(QWidget *parent)
     speedButton->setShortcut(Qt::ALT | Qt::Key_D);
     addWidget(speedButton);
     m_btnGroup->addButton(speedButton, SpeedTab);
+    for (QAbstractButton *button : m_btnGroup->buttons())
+    {
+        button->setObjectName(u"propTab"_s);
+        button->setCursor(Qt::PointingHandCursor);
+    }
+
     // SIGNAL/SLOT
     connect(m_btnGroup, &QButtonGroup::idClicked
             , this, &PropTabBar::setCurrentIndex);

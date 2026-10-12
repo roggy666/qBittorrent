@@ -35,10 +35,13 @@
 #include <QTreeView>
 
 #include "base/bittorrent/infohash.h"
+#include "base/global.h"
+#include "base/settingvalue.h"
 #include "guiapplicationcomponent.h"
 #include "transferlistmodel.h"
 
 class Path;
+class QStyledItemDelegate;
 class TransferListSortModel;
 
 namespace BitTorrent
@@ -61,6 +64,9 @@ public:
     TransferListWidget(IGUIApplication *app, QWidget *parent);
     ~TransferListWidget() override;
     TransferListModel *getSourceModel() const;
+
+    bool isCardView() const;
+    void setCardView(bool enabled);
 
 public slots:
     void setSelectionCategory(const QString &category);
@@ -107,6 +113,7 @@ public slots:
 
 signals:
     void currentTorrentChanged(BitTorrent::Torrent *torrent);
+    void cardViewChanged(bool enabled);
 
 private slots:
     void torrentDoubleClicked();
@@ -140,6 +147,12 @@ private:
     QList<BitTorrent::Torrent *> getVisibleTorrents() const;
     int visibleColumnsCount() const;
 
+    void applyCardView();
+    void updateSpanning(int first = 0, int last = -1);
+
     TransferListModel *m_listModel = nullptr;
     TransferListSortModel *m_sortFilterModel = nullptr;
+    QStyledItemDelegate *m_tableDelegate = nullptr;
+    QStyledItemDelegate *m_cardDelegate = nullptr;
+    SettingValue<bool> m_cardViewSetting {u"GUI/TransferList/CardView"_s};
 };

@@ -42,6 +42,7 @@
 #include "base/path.h"
 #include "base/profile.h"
 #include "base/preferences.h"
+#include "modern/modernstyle.h"
 #include "uithemecommon.h"
 
 namespace
@@ -119,6 +120,10 @@ UIThemeManager::UIThemeManager()
     {
         applyPalette();
         applyStyleSheet();
+    }
+    else
+    {
+        ModernStyle::apply();
     }
 }
 

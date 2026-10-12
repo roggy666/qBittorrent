@@ -29,6 +29,8 @@
 
 #include "mainwindow.h"
 
+#include <QToolButton>
+
 #include <QtSystemDetection>
 
 #include <algorithm>
@@ -108,6 +110,8 @@
 #include "macosstatusitem/statusitem.h"
 #include "macutilities.h"
 #endif
+#include "modern/modernstyle.h"
+#include "modern/speedindicator.h"
 #if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
 #include "programupdater.h"
 #endif
@@ -216,6 +220,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
 
     qDebug("create tabWidget");
     m_tabs = new HidableTabWidget(this);
+    m_tabs->setObjectName(u"mainTabs"_s);
     connect(m_tabs.data(), &QTabWidget::currentChanged, this, &MainWindow::tabChanged);
 
     m_splitter = new QSplitter(Qt::Horizontal, this);
@@ -258,6 +263,84 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
     hSplitter->addWidget(m_propertiesWidget);
     m_splitter->addWidget(hSplitter);
     m_splitter->setCollapsible(0, false);
+
+    // ---------------- modern top bar ----------------
+    {
+        if (QWidget *addBtn = m_ui->toolBar->widgetForAction(m_ui->actionOpen))
+            addBtn->setObjectName(u"primaryAction"_s);
+        m_columnFilterEdit->setObjectName(u"searchField"_s);
+        m_columnFilterEdit->setPlaceholderText(tr("Search torrents..."));
+        m_columnFilterEdit->setFixedWidth(260);
+        m_columnFilterEdit->setClearButtonEnabled(true);
+        columnFilterLabel->hide();
+        m_columnFilterComboBox->setFixedWidth(120);
+
+        m_speedIndicator = new SpeedIndicator(this);
+        connect(m_speedIndicator, &SpeedIndicator::clicked, this, &MainWindow::on_actionSetGlobalSpeedLimits_triggered);
+        m_ui->toolBar->insertWidget(m_columnFilterAction, m_speedIndicator);
+
+        auto *sortWidget = new QWidget(this);
+        auto *sortLayout = new QHBoxLayout(sortWidget);
+        sortLayout->setContentsMargins(10, 0, 6, 0);
+        sortLayout->setSpacing(4);
+        auto *sortLabel = new QLabel(tr("Sort"), sortWidget);
+        sortLabel->setObjectName(u"mutedLabel"_s);
+        m_sortComboBox = new QComboBox(sortWidget);
+        const QList<QPair<QString, TransferListModel::Column>> sortItems =
+        {
+            {tr("Name"), TransferListModel::TR_NAME}, {tr("Added on"), TransferListModel::TR_ADD_DATE},
+            {tr("Progress"), TransferListModel::TR_PROGRESS}, {tr("Down speed"), TransferListModel::TR_DLSPEED},
+            {tr("Up speed"), TransferListModel::TR_UPSPEED}, {tr("Size"), TransferListModel::TR_SIZE},
+            {tr("ETA"), TransferListModel::TR_ETA}, {tr("Ratio"), TransferListModel::TR_RATIO},
+            {tr("Status"), TransferListModel::TR_STATUS}, {tr("Queue"), TransferListModel::TR_QUEUE_POSITION}
+        };
+        for (const auto &[text, col] : sortItems)
+            m_sortComboBox->addItem(text, static_cast<int>(col));
+        m_sortOrderButton = new QToolButton(sortWidget);
+        m_sortOrderButton->setCheckable(true);
+        m_sortOrderButton->setToolTip(tr("Toggle sort order"));
+        sortLayout->addWidget(sortLabel);
+        sortLayout->addWidget(m_sortComboBox);
+        sortLayout->addWidget(m_sortOrderButton);
+        m_sortAction = m_ui->toolBar->insertWidget(m_columnFilterAction, sortWidget);
+
+        const auto syncSortIcon = [this]
+        {
+            m_sortOrderButton->setIcon(QIcon(m_sortOrderButton->isChecked() ? u":/modern/chevron-down.svg"_s : u":/modern/chevron-up.svg"_s));
+        };
+        {
+            const int cur = m_transferListWidget->header()->sortIndicatorSection();
+            if (const int idx = m_sortComboBox->findData(cur); idx >= 0)
+                m_sortComboBox->setCurrentIndex(idx);
+            m_sortOrderButton->setChecked(m_transferListWidget->header()->sortIndicatorOrder() == Qt::DescendingOrder);
+            syncSortIcon();
+        }
+        const auto applySort = [this, syncSortIcon]
+        {
+            syncSortIcon();
+            const int col = m_sortComboBox->currentData().toInt();
+            const Qt::SortOrder order = m_sortOrderButton->isChecked() ? Qt::DescendingOrder : Qt::AscendingOrder;
+            m_transferListWidget->sortByColumn(col, order);
+        };
+        connect(m_sortComboBox, &QComboBox::currentIndexChanged, this, applySort);
+        connect(m_sortOrderButton, &QToolButton::toggled, this, applySort);
+
+        m_cardViewAction = new QAction(tr("Card view"), this);
+        m_cardViewAction->setCheckable(true);
+        m_cardViewAction->setToolTip(tr("Switch between card and table view"));
+        const auto syncCardView = [this](const bool card)
+        {
+            m_cardViewAction->setChecked(card);
+            m_cardViewAction->setIcon(QIcon(card ? u":/modern/table.svg"_s : u":/modern/grid.svg"_s));
+            m_cardViewAction->setText(card ? tr("Table view") : tr("Card view"));
+            m_sortAction->setVisible(card);
+        };
+        syncCardView(m_transferListWidget->isCardView());
+        connect(m_cardViewAction, &QAction::toggled, m_transferListWidget, &TransferListWidget::setCardView);
+        connect(m_transferListWidget, &TransferListWidget::cardViewChanged, this, syncCardView);
+        m_ui->toolBar->insertAction(m_columnFilterAction, m_cardViewAction);
+        m_ui->menuView->insertAction(m_ui->actionSpeedInTitleBar, m_cardViewAction);
+    }
     m_tabs->addTab(m_splitter,
 #ifndef Q_OS_MACOS
         UIThemeManager::instance()->getIcon(u"folder-remote"_s),
@@ -280,6 +363,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
     m_ui->centralWidgetLayout->addSpacing(8);
 #endif
 
+    m_ui->centralWidgetLayout->setContentsMargins(10, 4, 10, 8);
     m_ui->centralWidgetLayout->addWidget(m_tabs);
 
     m_queueSeparator = m_ui->toolBar->insertSeparator(m_ui->actionTopQueuePos);
@@ -1129,6 +1213,7 @@ void MainWindow::showEvent(QShowEvent *e)
         if (m_neverShown)
         {
             m_propertiesWidget->readSettings();
+            ModernStyle::applyWindowFrame(this);
             m_neverShown = false;
         }
 

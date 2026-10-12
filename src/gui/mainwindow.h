@@ -45,6 +45,7 @@ class QSplitter;
 class QString;
 class QTabWidget;
 class QTimer;
+class QToolButton;
 
 class AboutDialog;
 class DownloadFromURLDialog;
@@ -56,6 +57,7 @@ class ProgramUpdater;
 class PropertiesWidget;
 class RSSWidget;
 class SearchWidget;
+class SpeedIndicator;
 class StatsDialog;
 class StatusBar;
 class TorrentCreatorDialog;
@@ -239,6 +241,11 @@ private:
     LineEdit *m_columnFilterEdit = nullptr;
     QAction *m_columnFilterAction = nullptr;
     QComboBox *m_columnFilterComboBox = nullptr;
+    SpeedIndicator *m_speedIndicator = nullptr;
+    QComboBox *m_sortComboBox = nullptr;
+    QToolButton *m_sortOrderButton = nullptr;
+    QAction *m_sortAction = nullptr;
+    QAction *m_cardViewAction = nullptr;
     // Widgets
     QAction *m_queueSeparator = nullptr;
     QAction *m_queueSeparatorMenu = nullptr;

@@ -53,6 +53,8 @@ TransferListFiltersWidget::TransferListFiltersWidget(QWidget *parent, TransferLi
     : QWidget(parent)
     , m_transferList {transferList}
 {
+    setObjectName(u"sidebar"_s);
+    setAttribute(Qt::WA_StyledBackground, true);
     setBackgroundRole(QPalette::Base);
 
     Preferences *const pref = Preferences::instance();

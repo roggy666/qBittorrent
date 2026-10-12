@@ -58,6 +58,7 @@
 #include "base/utils/string.h"
 #include "autoexpandabledialog.h"
 #include "deletionconfirmationdialog.h"
+#include "modern/transferlistcarddelegate.h"
 #include "interfaces/iguiapplication.h"
 #include "mainwindow.h"
 #include "optionsdialog.h"
@@ -122,8 +123,10 @@ TransferListWidget::TransferListWidget(IGUIApplication *app, QWidget *parent)
     // Load settings
     const bool columnLoaded = loadSettings();
 
-    // Create and apply delegate
-    setItemDelegate(new TransferListDelegate(this));
+    // Create delegates (table / card)
+    m_tableDelegate = new TransferListDelegate(this);
+    m_cardDelegate = new TransferListCardDelegate(this);
+    setItemDelegate(m_tableDelegate);
 
     m_sortFilterModel->setDynamicSortFilter(true);
     m_sortFilterModel->setSourceModel(m_listModel);
@@ -132,6 +135,12 @@ TransferListWidget::TransferListWidget(IGUIApplication *app, QWidget *parent)
     m_sortFilterModel->setSortCaseSensitivity(Qt::CaseInsensitive);
     m_sortFilterModel->setSortRole(TransferListModel::UnderlyingDataRole);
     setModel(m_sortFilterModel);
+
+    setObjectName(u"transferList"_s);
+    setMouseTracking(true);
+    connect(m_sortFilterModel, &QAbstractItemModel::rowsInserted, this, [this](const QModelIndex &, const int first, const int last) { updateSpanning(first, last); });
+    connect(m_sortFilterModel, &QAbstractItemModel::modelReset, this, [this] { updateSpanning(); });
+    connect(m_sortFilterModel, &QAbstractItemModel::layoutChanged, this, [this] { updateSpanning(); });
 
     // Visual settings
     setUniformRowHeights(true);
@@ -228,6 +237,8 @@ TransferListWidget::TransferListWidget(IGUIApplication *app, QWidget *parent)
     connect(recheckHotkey, &QShortcut::activated, this, &TransferListWidget::recheckSelectedTorrents);
     const auto *forceStartHotkey = new QShortcut((Qt::CTRL | Qt::Key_M), this, nullptr, nullptr, Qt::WidgetShortcut);
     connect(forceStartHotkey, &QShortcut::activated, this, &TransferListWidget::forceStartSelectedTorrents);
+
+    applyCardView();
 }
 
 TransferListWidget::~TransferListWidget()
@@ -239,6 +250,41 @@ TransferListWidget::~TransferListWidget()
 TransferListModel *TransferListWidget::getSourceModel() const
 {
     return m_listModel;
+}
+
+bool TransferListWidget::isCardView() const
+{
+    return m_cardViewSetting.get(true);
+}
+
+void TransferListWidget::setCardView(const bool enabled)
+{
+    if (enabled == isCardView())
+        return;
+    m_cardViewSetting = enabled;
+    applyCardView();
+    emit cardViewChanged(enabled);
+}
+
+void TransferListWidget::applyCardView()
+{
+    const bool card = isCardView();
+    setItemDelegate(card ? m_cardDelegate : m_tableDelegate);
+    setUniformRowHeights(!card);
+    header()->setVisible(!card);
+    setAlternatingRowColors(false);
+    updateSpanning();
+    doItemsLayout();
+    viewport()->update();
+}
+
+void TransferListWidget::updateSpanning(const int first, int last)
+{
+    const bool card = isCardView();
+    if (last < 0)
+        last = m_sortFilterModel->rowCount() - 1;
+    for (int row = first; row <= last; ++row)
+        setFirstColumnSpanned(row, QModelIndex(), card);
 }
 
 void TransferListWidget::previewFile(const Path &filePath)
